@@ -3,6 +3,8 @@ import scrapy
 import nltk
 import sqlite3, MySQLdb
 
+from bot import comment
+
 def main():
 
     db_init()
@@ -57,7 +59,9 @@ def bot1_init():
                 artist = newTitle.replace('[fresh]','').split('-')[0].strip()
                 song = newTitle.replace('[fresh]','').split('-')[1].strip()
 
-
+                '''
+                Initialize web scraper, get links
+                '''
 
                 # Add submission to table of posts that have been replied to
                 query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(submission.id, artist, song)
