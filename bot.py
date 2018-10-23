@@ -1,3 +1,7 @@
+'''
+Bot functions
+'''
+
 import praw
 
 #Initialize bot

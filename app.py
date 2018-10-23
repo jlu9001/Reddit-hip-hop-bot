@@ -1,23 +1,26 @@
 '''
-Main application. Execute via
+Created by James Lu.
+Last Modified: 10/22/2018
+Usage: $ python3 app.py <MySQL Password>
 '''
 
 import os, sys
 import requests, json
 import numpy, matplotlib, nltk
-import sqlite3, MySQLdb
+import MySQLdb
 
 from bot import redditInit, comment, post
 from links import getLinks
 
+
+#main program
 def main():
 
     db_init()
+    bot1 = Bot1()
 
-    #main program
     while(1):
-        bot1()
-        bot2()
+        bot1.run()
 
 
 '''
@@ -42,49 +45,56 @@ def db_init():
 '''
 This bot gets and comments alternate streaming services for new song submissions
 '''
-def bot1():
+class Bot1():
 
-    redditInit('bot1')
+    def __init__(self):
 
-    response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads/new.json?sort=new").text)
+        redditInit('bot1')
 
-    #Check for valid response from Reddit API
-    try:
-        if response["data"]:
+        # Get new posts from Reddit API
+        self.response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads/new.json?sort=new", timeout=5).text)
 
-            # Get array of new posts
-            children = response["data"]["children"]
-            for child in children:
 
-                #Filter new posts for song submissions only
-                newTitle = child["data"]["title"].lower()
-                if "[fresh]" in newTitle and 'soundcloud' not in child["data"]["url"] and len(newTitle.replace('[fresh]','').split('-')) == 2:
+    def run(self):
 
-                    print("Title: " + newTitle)
-                    print("Url: " + child["data"]["url"])
-                    query = 'SELECT post_id FROM posts_replied_to WHERE post_id="{}"'.format(child["data"]["id"])
-                    cursor.execute(query)
-                    servicedId = cursor.fetchone()
+        #Check for valid response from Reddit API
+        try:
+            if self.response["data"]:
 
-                    # Only execute if post hasn't been replied to yet
-                    if not servicedId:
-                        artist = newTitle.replace('[fresh]','').split('-')[0].strip()
-                        song = newTitle.replace('[fresh]','').split('-')[1].strip()
+                # Get array of new posts
+                children = self.response["data"]["children"]
+                for child in children:
 
-                        #initialize web scraper, get links
+                    #Filter new posts for song submissions only and filter out songs exclusive to soundcloud
+                    newTitle = child["data"]["title"].lower()
+                    if "[fresh]" in newTitle and 'soundcloud' not in child["data"]["url"] and len(newTitle.replace('[fresh]','').split('-')) == 2:
 
-                        # Add submission to table of posts that have been replied to
-                        query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(child["data"]["id"], artist, song)
+                        print("Title: " + newTitle)
+                        print("Url: " + child["data"]["url"])
+                        query = 'SELECT post_id FROM posts_replied_to WHERE post_id="{}"'.format(child["data"]["id"])
                         cursor.execute(query)
-                        conn.commit()
+                        servicedId = cursor.fetchone()
 
-    except:
-        print("No response")
+                        # Only execute if post hasn't been replied to yet
+                        if not servicedId:
+                            artist = newTitle.replace('[fresh]','').split('-')[0].strip()
+                            song = newTitle.replace('[fresh]','').split('-')[1].strip()
+
+                            #initialize web scraper, get links
+                            links = getLinks(song, artist)
+
+                            # Add submission to table of posts that have been replied to
+                            query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(child["data"]["id"], artist, song)
+                            cursor.execute(query)
+                            conn.commit()
+
+        except:
+            return 0
+
+
+class Bot2():
+    def __init__(self):
         return 0
-
-
-def bot2():
-    return 0
 
 if __name__=="__main__":
     main()
