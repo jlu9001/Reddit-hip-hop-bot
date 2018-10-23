@@ -2,8 +2,8 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 
 
-class QuotesSpider(scrapy.Spider):
-    name = "quotes"
+class LinksSpider(scrapy.Spider):
+    name = "links"
 
     def start_requests(self):
 
@@ -22,13 +22,13 @@ class QuotesSpider(scrapy.Spider):
                 'tags': quote.css('div.tags a.tag::text').extract(),
             }
 
-def startScraping():
+def getLinks():
     process = CrawlerProcess({
         'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
         'FEED_FORMAT': 'json',
         'FEED_URI': 'output.json',
     })
 
-    process.crawl(QuotesSpider)
+    process.crawl(LinksSpider)
     process.start(stop_after_crawl=False) # the script will block here until the crawling is finished
     return

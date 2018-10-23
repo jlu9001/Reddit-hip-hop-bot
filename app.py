@@ -1,18 +1,23 @@
-import praw
-import subprocess
-import scrapy
-import nltk
+'''
+Main application. Execute via
+'''
+
+import os, sys
+import requests, json
+import numpy, matplotlib, nltk
 import sqlite3, MySQLdb
 
-from bot import comment
-from getLinks import startScraping
+from bot import redditInit, comment, post
+from links import getLinks
 
 def main():
 
     db_init()
-    reddit_init()
-    bot1()
-    bot2()
+
+    #main program
+    while(1):
+        bot1()
+        bot2()
 
 
 '''
@@ -24,7 +29,7 @@ def db_init():
     global conn, cursor
     conn = MySQLdb.connect(host="localhost",
                      user="root",
-                     passwd="Jame$9001",
+                     passwd=os.environ['SQLPASS'],
                      db="posts")
     cursor = conn.cursor()
 
@@ -35,53 +40,47 @@ def db_init():
 
 
 '''
-Initialize Reddit API wrapper
-'''
-def reddit_init():
-
-    #Initialize bot1
-    global reddit, subreddit
-    reddit = praw.Reddit('bot1')
-    subreddit = reddit.subreddit("hiphopheads")
-
-
-'''
 This bot gets and comments alternate streaming services for new song submissions
 '''
 def bot1():
 
-    for submission in subreddit.new(limit=50):
+    redditInit('bot1')
 
-        #Filter new posts for song submissions only
-        newTitle = submission.title.lower()
+    response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads/new.json?sort=new").text)
 
+    #Check for valid response from Reddit API
+    try:
+        if response["data"]:
 
-        #Filter out soundcloud exclusive songs
-        if "[fresh]" in newTitle and 'soundcloud' not in submission.url and len(newTitle.replace('[fresh]','').split('-')) == 2:
+            # Get array of new posts
+            children = response["data"]["children"]
+            for child in children:
 
-            print("Title: " + newTitle)
-            print("Url: " + submission.url)
-            query = 'SELECT post_id FROM posts_replied_to WHERE post_id="{}"'.format(submission.id)
-            cursor.execute(query)
-            servicedId = cursor.fetchone()
+                #Filter new posts for song submissions only
+                newTitle = child["data"]["title"].lower()
+                if "[fresh]" in newTitle and 'soundcloud' not in child["data"]["url"] and len(newTitle.replace('[fresh]','').split('-')) == 2:
 
-            # Only execute if post hasn't been replied to yet
-            if not servicedId:
+                    print("Title: " + newTitle)
+                    print("Url: " + child["data"]["url"])
+                    query = 'SELECT post_id FROM posts_replied_to WHERE post_id="{}"'.format(child["data"]["id"])
+                    cursor.execute(query)
+                    servicedId = cursor.fetchone()
 
-                #Parse the artist and song from the submission title
-                artist = newTitle.replace('[fresh]','').split('-')[0].strip()
-                song = newTitle.replace('[fresh]','').split('-')[1].strip()
+                    # Only execute if post hasn't been replied to yet
+                    if not servicedId:
+                        artist = newTitle.replace('[fresh]','').split('-')[0].strip()
+                        song = newTitle.replace('[fresh]','').split('-')[1].strip()
 
-                '''
-                Initialize web scraper, get links
-                '''
-                startScraping()
+                        #initialize web scraper, get links
 
-                # Add submission to table of posts that have been replied to
-                query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(submission.id, artist, song)
-                cursor.execute(query)
-                conn.commit()
+                        # Add submission to table of posts that have been replied to
+                        query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(child["data"]["id"], artist, song)
+                        cursor.execute(query)
+                        conn.commit()
 
+    except:
+        print("No response")
+        return 0
 
 
 def bot2():
