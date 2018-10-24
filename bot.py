@@ -1,5 +1,5 @@
 '''
-Bot functions
+Bot functionality
 '''
 
 import praw
@@ -9,11 +9,16 @@ def redditInit(bot):
 
     global reddit, subreddit
     reddit = praw.Reddit(bot)
-    subreddit = reddit.subreddit("hiphopheads")
+    subreddit = reddit.subreddit("jlu9001")
 
 
-def comment(id, content):
-    return 0
+#Posts comment to a submission
+def comment(postId, content):
 
+    submission = reddit.submission(id=postId)
+    submission.reply(content)
+
+
+#Posts submission to subreddit
 def post(id, content):
     return 0

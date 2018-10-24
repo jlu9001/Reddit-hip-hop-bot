@@ -13,19 +13,19 @@ from bot import redditInit, comment, post
 from links import getLinks
 
 
-#main program
+#Main program
 def main():
 
     db_init()
     bot1 = Bot1()
 
+    #comment("9bl2uu","Yeezy yeezy what's good")
+
     while(1):
         bot1.run()
 
 
-'''
-Initialize SQL database to store Reddit posts
-'''
+#Initialize SQL database to store Reddit posts
 def db_init():
 
     #Initialze database
@@ -42,27 +42,23 @@ def db_init():
     conn.commit()
 
 
-'''
-This bot gets and comments alternate streaming services for new song submissions
-'''
+#This bot gets and comments alternate streaming services for new song submissions
 class Bot1():
 
     def __init__(self):
 
         redditInit('bot1')
 
-        # Get new posts from Reddit API
-        self.response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads/new.json?sort=new", timeout=5).text)
-
 
     def run(self):
 
         #Check for valid response from Reddit API
+        response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads/new.json?sort=new", timeout=5).text)
         try:
-            if self.response["data"]:
+            if response["data"]:
 
                 # Get array of new posts
-                children = self.response["data"]["children"]
+                children = response["data"]["children"]
                 for child in children:
 
                     #Filter new posts for song submissions only and filter out songs exclusive to soundcloud
@@ -71,20 +67,31 @@ class Bot1():
 
                         print("Title: " + newTitle)
                         print("Url: " + child["data"]["url"])
+                        artist = newTitle.replace('[fresh]','').split('-')[0].strip()
+                        song = newTitle.replace('[fresh]','').split('-')[1].strip()
+                        links = getLinks(song, artist)
+
+
                         query = 'SELECT post_id FROM posts_replied_to WHERE post_id="{}"'.format(child["data"]["id"])
                         cursor.execute(query)
                         servicedId = cursor.fetchone()
 
                         # Only execute if post hasn't been replied to yet
                         if not servicedId:
+
                             artist = newTitle.replace('[fresh]','').split('-')[0].strip()
                             song = newTitle.replace('[fresh]','').split('-')[1].strip()
+                            id = child["data"]["id"]
 
-                            #initialize web scraper, get links
+                            #Get links from streaming services
                             links = getLinks(song, artist)
 
+                            #Comment to post
+                            comment=""
+
+
                             # Add submission to table of posts that have been replied to
-                            query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(child["data"]["id"], artist, song)
+                            query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(id, artist, song)
                             cursor.execute(query)
                             conn.commit()
 
@@ -92,6 +99,7 @@ class Bot1():
             return 0
 
 
+#This bot analyzes user sentiments in new album threads
 class Bot2():
     def __init__(self):
         return 0
