@@ -50,7 +50,7 @@ class Bot1():
     def run(self):
 
         #Check for valid response from Reddit API
-        response = json.loads(requests.get("https://www.reddit.com/r/jlu9001/new.json?sort=new", timeout=5).text)
+        response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads/new.json?sort=new", timeout=5).text)
         try:
             if response["data"]:
 
@@ -82,8 +82,8 @@ class Bot1():
                             links = getLinks(song, artist)
 
                             #Comment to post
-                            content="Here are other streaming services that have " + song.upper() + " by " + artist.upper + ":\n***\n" \
-                                    + (("[Spotify](" + links["Spotify"] + ")\n\n") if 'open.spotify' in links["Spotify"] else "Spotify Link Unavailable\n\n") \
+                            content="Here are other streaming services that have " + song.upper() + " by " + artist.upper()+ ":\n***\n" \
+                                    + (("[Spotify](" + links["Spotify"] + ")\n\n") if 'open.spotify' in links["Spotify"] and 'user' not in links["Spotify"] else "Spotify Link Unavailable\n\n") \
                                     + (("[Apple Music](" + links["Apple Music"] + ")\n\n") if 'itunes.apple' in links["Apple Music"] else "Apple Music Link Unavailable\n\n") \
                                     + (("[Amazon Music](" + links["Amazon Music"] + ")\n\n") if 'amazon' in links["Amazon Music"] else "Amazon Music Link Unavailable\n\n") \
                                     + (("[Google Play](" + links["Google Play"] + ")\n\n") if 'play.google' in links["Google Play"] else "Google Play Link Unavailable\n\n") \

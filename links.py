@@ -22,6 +22,7 @@ def getLinks(song, artist):
         # Fetch content from url
         response = requests.get(url, timeout=5)
         content = BeautifulSoup(response.content, "html.parser")
+        print(content)
         link = content.find(attrs={"class": "r"}).a.get('href')     # Scrape top link from google
 
         # Clean the link
