@@ -6,7 +6,8 @@ Usage: $ python3 app.py <MySQL Password>
 
 import os, sys
 import requests, json
-import numpy, matplotlib, nltk
+import numpy as np
+import matplotlib, nltk
 import MySQLdb
 
 from bot import redditInit, comment, post
@@ -19,11 +20,14 @@ def main():
     db_init()
     bot1 = Bot1()
 
+    links = getLinks("I Love It","Kanye West")
+    print(links)
     #comment("9bl2uu","Yeezy yeezy what's good")
 
+    '''
     while(1):
         bot1.run()
-
+    '''
 
 #Initialize SQL database to store Reddit posts
 def db_init():
@@ -88,6 +92,7 @@ class Bot1():
 
                             #Comment to post
                             comment=""
+                            #comment(id, comment)
 
 
                             # Add submission to table of posts that have been replied to
