@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 
 def getLinks(song, artist):
 
-    # Replace spaces with addition symbols for google search query
-    query = song.replace(' ', '+') + '+by+' + artist.replace(' ', '+')
+    # Make google search query
+    query = song.replace(' ', '+').replace('&','%26') + '+by+' + artist.replace(' ', '+').replace('&','%26')
 
     links = {"Spotify":"", "Apple Music":"", "Amazon Music":"", "Google Play":"", "Tidal":""}
     services = ['Spotify', 'Apple Music', 'Amazon Music', 'Google Play', 'Tidal']
@@ -22,7 +22,6 @@ def getLinks(song, artist):
         # Fetch content from url
         response = requests.get(url, timeout=5)
         content = BeautifulSoup(response.content, "html.parser")
-        print(content)
         link = content.find(attrs={"class": "r"}).a.get('href')     # Scrape top link from google
 
         # Clean the link
@@ -31,5 +30,5 @@ def getLinks(song, artist):
 
         links[service]=link
 
-
+    print(links)
     return links

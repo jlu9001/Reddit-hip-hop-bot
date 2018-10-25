@@ -9,6 +9,7 @@ import requests, json
 import numpy as np
 import matplotlib, nltk
 import MySQLdb
+import time
 
 from bot import redditInit, comment, post
 from links import getLinks
@@ -69,8 +70,8 @@ class Bot1():
                         # Only execute if post hasn't been replied to yet
                         if not servicedId:
 
-                            artist = newTitle.replace('[fresh]','').split('-')[0].strip()
-                            song = newTitle.replace('[fresh]','').split('-')[1].strip()
+                            artist = newTitle.replace('[fresh]','').split('-')[0].strip().replace('&amp;','&')
+                            song = newTitle.replace('[fresh]','').split('-')[1].strip().replace('&amp;','&')
                             id = child["data"]["id"]
 
                             print("Song: " + song)
@@ -81,15 +82,18 @@ class Bot1():
                             #Get links from streaming services
                             links = getLinks(song, artist)
 
+                            print("Got links")
+
                             #Comment to post
                             content="Here are other streaming services that have " + song.upper() + " by " + artist.upper()+ ":\n***\n" \
-                                    + (("[Spotify](" + links["Spotify"] + ")\n\n") if 'open.spotify' in links["Spotify"] and 'user' not in links["Spotify"] else "Spotify Link Unavailable\n\n") \
+                                    + (("[Spotify](" + links["Spotify"] + ")\n\n") if ('open.spotify' in links["Spotify"] and 'user' not in links["Spotify"]) else "Spotify Link Unavailable\n\n") \
                                     + (("[Apple Music](" + links["Apple Music"] + ")\n\n") if 'itunes.apple' in links["Apple Music"] else "Apple Music Link Unavailable\n\n") \
                                     + (("[Amazon Music](" + links["Amazon Music"] + ")\n\n") if 'amazon' in links["Amazon Music"] else "Amazon Music Link Unavailable\n\n") \
                                     + (("[Google Play](" + links["Google Play"] + ")\n\n") if 'play.google' in links["Google Play"] else "Google Play Link Unavailable\n\n") \
                                     + (("[Tidal](" + links["Tidal"] + ")\n\n") if 'tidal.com' in links["Tidal"] else "Tidal Link Unavailable\n\n") \
                                     + "***\n^(I am a bot. You can view my source code) ^[here](https://github.com/jlu9001/Reddit-hip-hop-bot)"
 
+                            print("Ready to comment on post " + id)
                             comment(id, content)
 
                             print("Serviced id: " + id)
@@ -98,6 +102,9 @@ class Bot1():
                             query = 'INSERT INTO posts_replied_to (post_id, artist, song) VALUES("{}","{}","{}")'.format(id, artist, song)
                             cursor.execute(query)
                             conn.commit()
+
+            # Delay to avoid ban
+            time.sleep(20)
 
         except:
             return 0
