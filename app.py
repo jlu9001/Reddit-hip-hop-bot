@@ -21,9 +21,10 @@ def main():
     # Initialize database and bots
     db_init()
     bot1 = Bot1()
+    bot2 = Bot2()
 
     while(1):
-        bot1.run()
+        bot2.run()
 
 #Initialize SQL database to store Reddit posts
 def db_init():
@@ -113,7 +114,46 @@ class Bot1():
 #This bot analyzes user sentiments in new album threads
 class Bot2():
     def __init__(self):
-        return 0
+        redditInit('bot2')
+
+    def run(self):
+        #Check for valid response from Reddit API
+        response = json.loads(requests.get("https://www.reddit.com/r/hiphopheads.json", timeout=5).text)
+        try:
+            if response["data"]:
+
+                # Get array of new posts
+                children = response["data"]["children"]
+                for child in children:
+
+                    #Filter new posts for new album threads only
+                    newTitle = child["data"]["title"].lower()
+                    if "[fresh album]" in newTitle:
+
+                        print(newTitle)
+                        id = child["data"]["id"]
+                        timeSubmitted = child["data"]["created_utc"]
+
+                        # Get how long ago (hours) album was posted
+                        timeDifference = (time.time() - timeSubmitted)/3600
+                        print("Id: " + id)
+                        print("Submission Time: " + str(timeSubmitted))
+                        print("Current Time: " + str(time.time()))
+                        print("Difference: " + str(timeDifference))
+
+                        #only reply 5 hours after album drop
+                        #if timeDifference>8:
+
+                print("DONE")
+
+
+            # Delay to avoid ban
+            time.sleep(5)
+
+        except:
+            return 0
+
+
 
 if __name__=="__main__":
     main()
